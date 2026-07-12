@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--
+  This tiny page is the fix for the iOS zoom bug — for free, no Mac needed.
+
+  Why it works: Apps Script always serves your web app inside a Google-
+  hosted iframe (script.googleusercontent.com). iOS Safari only respects
+  the viewport <meta> tag of the OUTERMOST page — Google's wrapper page,
+  not the app inside it — which is exactly what causes the zoom-on-focus /
+  zoom-on-load bugs.
+
+  This page becomes the new "outermost page" instead: it has its own
+  locked-down viewport tag, and puts your actual app in an iframe inside
+  it. When a user does Share -> Add to Home Screen on THIS page (not the
+  raw script.google.com link), iOS launches it full-screen with no
+  Safari address bar, an app icon, and the zoom bug gone — functionally a
+  real app, built entirely with free tools.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aries Orders">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Aries Orders</title>
+
+<!-- Optional: drop a 180x180px square logo named icon.png in this same
+     folder to get a real app icon on the home screen instead of iOS's
+     automatic screenshot thumbnail. Not required to work. -->
+<link rel="apple-touch-icon" href="icon.png">
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #0b6bcb; /* shows briefly while the iframe loads */
+  }
+  #appFrame {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+  <!--
+    ⚠️ REPLACE THE URL BELOW with your real Apps Script deployment URL.
+    Apps Script editor -> Deploy -> Manage deployments -> copy the URL
+    ending in /exec (NOT the editor URL, and NOT a /dev URL).
+  -->
+  <iframe id="appFrame"
+          src="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+          allow="camera; microphone"
+          allowfullscreen></iframe>
+
+  <script>
+    // Belt-and-suspenders: the viewport meta tag above already tells
+    // Safari not to zoom, but this stops pinch-zoom and the iOS
+    // double-tap-to-zoom gesture more forcefully once installed as a
+    // standalone home-screen app.
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (e) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, false);
+  </script>
+
+</body>
+</html>
